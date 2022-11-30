@@ -1,0 +1,44 @@
+5+6*2
+faux et non faux ou vrai
+a=123
+@b= vrai et non (faux ou vrai)
+a+1<100 ou 10*5 == 2*a
+@a=@b ou a<100+100
+PRINT
+@b+1
+
+
+4+2*d+e+b+u+s+g
+
+@c = 4
+d = vrai
+
+faux + faux
+4 + faux
+4 + faux
+
+vrai * vrai
+4 * vrai
+vrai * 4 
+
+4 et 4
+4 et vrai
+vrai et 4
+
+4 ou 4
+4 ou vrai
+vrai ou 4
+
+non 4
+
+faux < faux
+4 < faux
+faux < 4
+
+6 /6
+7 - 7
+-4 +5
+
+faux == faux
+4 == faux
+faux == 4

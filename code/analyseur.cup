@@ -1,0 +1,266 @@
+//Spécification JCup
+import java_cup.runtime.*;
+import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ArrayList;
+
+parser code {:
+    public static void main(String args[]) throws Exception {
+        new parser(new Yylex(new InputStreamReader(System.in))).parse();
+
+    }    
+:}
+
+action code{:
+    HashMap<String,Integer>intTable = new HashMap<String,Integer>();
+    HashMap<String,Boolean>boolTable = new HashMap<String,Boolean>();
+    ArrayList<String>errorsTable = new ArrayList<String>();
+:}
+
+terminal String ADD,MULTIPLY,BRACKETL, BRACKETR, TRUE, FALSE, INFERIOR, EQUALITY, AND, OR, NO, VAR_INTEGER, VAR_BOOLEAN, RETURN, ERROR;
+terminal Integer NUMBER;
+terminal AFFECTATION, PRINT;
+
+non terminal expr, list_expr;
+non terminal Boolean bool;
+non terminal Integer arithm;
+
+precedence left OR;
+precedence left AND;
+precedence left EQUALITY, INFERIOR;
+precedence left NO;
+precedence left ADD;
+precedence left MULTIPLY;
+precedence left AFFECTATION;
+
+
+list_expr ::= expr | expr RETURN list_expr;
+
+expr ::= arithm:res{:
+    if(res!=null){
+        System.out.println("-entier :"+res);
+    }
+    else{
+        if(errorsTable.size()>0){
+            System.out.println("Erreur sémantique : ");
+            for(String s :errorsTable){
+                System.out.println("Identifcateur inconnu : "+s);
+            }
+
+            errorsTable.clear();
+        }
+
+    }
+
+:} | bool:res{:
+    if(res !=null){
+        System.out.println("-booleen : "+res);
+    }
+    else{
+        if(errorsTable.size()>0){
+            System.out.println("Erreur sémantique : ");
+            for(String s :errorsTable){
+                System.out.println("Identifcateur inconnu : "+s);
+            }
+            errorsTable.clear();
+        }
+    }
+
+:} | VAR_INTEGER:v1 AFFECTATION arithm:a1{:
+
+    intTable.put(v1,a1);
+    System.out.println(v1+" entier :"+intTable.get(v1));
+
+    
+
+
+:} | VAR_BOOLEAN:v1 AFFECTATION bool:b1{:
+
+    boolTable.put(v1,b1);
+    System.out.println(v1+" booleen:"+boolTable.get(v1));
+    
+
+
+
+
+:} |PRINT{:
+    System.out.println("Variables entières : ");
+
+    for(Map.Entry<String,Integer>entry : intTable.entrySet()){
+        System.out.println(entry.getKey()+" : "+entry.getValue());
+    }
+    
+    
+    System.out.println("Variables booléennes :");
+ 
+    for(Map.Entry<String,Boolean>entry : boolTable.entrySet()){
+        System.out.println(entry.getKey()+" : "+entry.getValue());
+    }
+
+
+:}|ERROR:er{:
+    System.out.println("ERREUR : erreur lexicales : "+er);
+
+:}
+| VAR_BOOLEAN AFFECTATION arithm{:
+    System.out.println("Erreur de typage : un entier ne peut être enregistré dans une variable de type booléenne");
+:}
+|VAR_INTEGER AFFECTATION bool{:
+    System.out.println("Erreur de typage : un booléen ne peut être enregistré dans une variable de type integer");
+
+:}
+| error
+|;
+
+//Entier
+arithm ::=  arithm:a1 ADD arithm:a2{:
+    if(a1!=null && a2!=null){
+        RESULT = a1 + a2;
+    }
+    else{
+        RESULT = null;
+
+    }
+:} 
+| arithm:a1 MULTIPLY arithm:a2{:
+    if(a1!=null && a2!=null){
+        RESULT = a1 * a2;
+    }
+    else{
+
+        RESULT = null;
+    }
+
+:}
+| BRACKETL arithm:a1 BRACKETR{:
+    RESULT = a1;
+:}
+| NUMBER:n{:
+    RESULT = n;
+:} 
+| VAR_INTEGER:v1{:
+    if(intTable.get(v1)!=null){
+        RESULT = intTable.get(v1);
+    }
+    else{
+        errorsTable.add(v1);
+        RESULT = null;
+    }
+:}
+| arithm AND arithm{:
+    System.out.println("Erreur de typage : opération incorrecte : et");
+
+:}
+| arithm AND bool{:
+    System.out.println("Erreur de typage : opération incorrecte : et");
+
+:}
+| bool AND arithm{:
+    System.out.println("Erreur de typage : opération incorrecte : et");
+
+:}
+| arithm OR arithm{:
+    System.out.println("Erreur de typage : opération incorrecte : ou");
+
+:}
+| arithm OR bool{:
+    System.out.println("Erreur de typage : opération incorrecte : ou");
+
+:}
+| bool OR arithm{:
+    System.out.println("Erreur de typage : opération incorrecte : ou");
+
+:}
+| NO arithm{:
+    System.out.println("Erreur de typage : opération incorrecte : non");
+
+:}
+;
+
+
+
+
+//Booléen
+bool ::= BRACKETL bool:b1 BRACKETR{:
+    RESULT = b1;
+:}
+|NO bool:b1{:
+    RESULT = !(b1);
+
+:}
+|arithm:a1 EQUALITY arithm:a2{: 
+    RESULT = a1.equals(a2);
+
+:}
+| bool:b1 AND bool:b2{:
+    RESULT = b1 && b2;
+
+:} 
+| bool:b1 OR bool:b2{:
+    RESULT = b1 || b2;
+:}
+| arithm:a1 INFERIOR arithm:a2{:
+    RESULT = a1<a2;
+
+:}
+| VAR_BOOLEAN:v1{:
+
+    if(boolTable.get(v1)!=null){
+        RESULT = boolTable.get(v1);  
+    }
+    else{
+        errorsTable.add(v1);
+        RESULT = null;
+    }
+:}
+| TRUE{:
+    RESULT = true;
+:}
+| FALSE{:
+    RESULT = false;
+:}
+| bool:b1 ADD bool:b2{:
+    System.out.println("Erreur de typage : opération incorrecte : +" );
+:}
+| bool MULTIPLY bool{:
+    System.out.println("Erreur de typage : opération incorrecte : *" );
+
+:}
+| bool EQUALITY bool{:
+    System.out.println("Erreur de typage : opération incorrecte : ==");
+:}
+| bool INFERIOR bool{:
+    System.out.println("Erreur de typage : opération incorrecte : <");
+:}
+| bool INFERIOR arithm{:
+    System.out.println("Erreur de typage : opération incorrecte : <");
+:}
+| arithm INFERIOR bool{:
+    System.out.println("Erreur de typage : opération incorrecte : <");
+:}
+
+| arithm EQUALITY bool{:
+    System.out.println("Erreur de typage : opération incorrecte : ==");
+
+:} 
+
+| bool EQUALITY arithm{:
+    System.out.println("Erreur de typage : opération incorrecte : ==");
+:}
+| arithm MULTIPLY bool{:
+    System.out.println("Erreur de typage : opération incorrecte : *");
+
+:}
+| bool MULTIPLY arithm{:
+    System.out.println("Erreur de typage : opération incorrecte : *");
+
+:}
+| bool ADD arithm{:
+    System.out.println("Erreur de typage : opération incorrecte : +");
+
+:}
+| arithm ADD bool{:
+    System.out.println("Erreur de typage : opération incorrecte : +");
+
+:};
